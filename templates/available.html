@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Available Medicines - Pharmacy Database{% endblock %}
+
+{% block content %}
+<h2>Available Medicines at Pharmacies</h2>
+
+<div class="form-section">
+    <h3>Add Medicine Availability</h3>
+    <form method="POST" action="{{ url_for('add_available') }}">
+        <div class="form-group">
+            <label>Medicine</label>
+            <select name="med_id" required>
+                <option value="">Select Medicine</option>
+                {% for medicine in medicines %}
+                <option value="{{ medicine.med_id }}">{{ medicine.med_name }} ({{ medicine.med_id }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Pharmacy</label>
+            <select name="pharmacy_id" required>
+                <option value="">Select Pharmacy</option>
+                {% for pharmacy in pharmacies %}
+                <option value="{{ pharmacy.pharmacy_id }}">{{ pharmacy.pharmacy_name }} ({{ pharmacy.pharmacy_id }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit">Add Availability</button>
+    </form>
+</div>
+
+<h3>All Available Medicines</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Medicine ID</th>
+            <th>Medicine Name</th>
+            <th>Pharmacy ID</th>
+            <th>Pharmacy Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in available %}
+        <tr>
+            <td>{{ item.med_id }}</td>
+            <td>{{ item.med_name }}</td>
+            <td>{{ item.pharmacy_id }}</td>
+            <td>{{ item.pharmacy_name }}</td>
+            <td>
+                <a href="{{ url_for('delete_available', med_id=item.med_id, pharmacy_id=item.pharmacy_id) }}" 
+                   class="btn btn-danger btn-sm" 
+                   onclick="return confirm('Are you sure?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

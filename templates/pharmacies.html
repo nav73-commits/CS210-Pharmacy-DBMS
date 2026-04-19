@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Pharmacies - Pharmacy Database{% endblock %}
+
+{% block content %}
+<h2>Pharmacies</h2>
+
+<div class="form-section">
+    <h3>Add New Pharmacy</h3>
+    <form method="POST" action="{{ url_for('add_pharmacy') }}">
+        <div class="form-group">
+            <label>Pharmacy ID</label>
+            <input type="text" name="pharmacy_id" required placeholder="e.g., PH001">
+        </div>
+        <div class="form-group">
+            <label>Pharmacy Name</label>
+            <input type="text" name="pharmacy_name" required placeholder="e.g., City Pharmacy">
+        </div>
+        <div class="form-group">
+            <label>Location</label>
+            <select name="location_id" required>
+                <option value="">Select Location</option>
+                {% for location in locations %}
+                <option value="{{ location.location_id }}">{{ location.location_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit">Add Pharmacy</button>
+    </form>
+</div>
+
+<h3>All Pharmacies</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Pharmacy ID</th>
+            <th>Pharmacy Name</th>
+            <th>Location</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pharmacy in pharmacies %}
+        <tr>
+            <td>{{ pharmacy.pharmacy_id }}</td>
+            <td>{{ pharmacy.pharmacy_name }}</td>
+            <td>{{ pharmacy.location_name }}</td>
+            <td>
+                <div class="actions">
+                    <button type="button" class="btn btn-sm" onclick="toggleEdit('{{ pharmacy.pharmacy_id }}')">Edit</button>
+                    <a href="{{ url_for('delete_pharmacy', pharmacy_id=pharmacy.pharmacy_id) }}" 
+                       class="btn btn-danger btn-sm" 
+                       onclick="return confirm('Are you sure?')">Delete</a>
+                </div>
+            </td>
+        </tr>
+        <tr id="edit-{{ pharmacy.pharmacy_id }}" class="edit-row">
+            <td colspan="4">
+                <form method="POST" action="{{ url_for('update_pharmacy', pharmacy_id=pharmacy.pharmacy_id) }}" class="edit-form">
+                    <div class="form-group">
+                        <label>Pharmacy Name</label>
+                        <input type="text" name="pharmacy_name" value="{{ pharmacy.pharmacy_name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <select name="location_id" required>
+                            {% for location in locations %}
+                            <option value="{{ location.location_id }}" {% if location.location_id == pharmacy.location_id %}selected{% endif %}>
+                                {{ location.location_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-sm">Save</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit('{{ pharmacy.pharmacy_id }}')">Cancel</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

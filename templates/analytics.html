@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Pharmacy Database{% endblock %}
+
+{% block content %}
+<h2>Analytics Dashboard</h2>
+
+<!-- Key Metrics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>${{ "%.2f"|format(summary.total_revenue) }}</h3>
+        <p>Total Revenue</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ summary.total_purchases }}</h3>
+        <p>Total Transactions</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ summary.total_units_sold }}</h3>
+        <p>Units Sold</p>
+    </div>
+    <div class="stat-card">
+        <h3>${{ "%.2f"|format(summary.avg_order_value) }}</h3>
+        <p>Avg Order Value</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ summary.total_medicines }}</h3>
+        <p>Medicines Tracked</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ summary.total_customers }}</h3>
+        <p>Customers</p>
+    </div>
+</div>
+
+<!-- Auto-Generated Insights -->
+<div class="insights-section">
+    <h3>Key Insights (Auto-Generated)</h3>
+    <div class="insights-grid">
+        {% for insight in insights %}
+        <div class="insight-card">
+            <span class="insight-icon">&#9672;</span>
+            <p>{{ insight }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Low Stock Alerts -->
+{% if low_stock_alerts %}
+<div class="alerts-section">
+    <h3 style="color: #dc2626;">⚠️ Low Stock Inventory Alerts</h3>
+    <div class="alert-cards">
+        {% for alert in low_stock_alerts %}
+        <div class="alert-card">
+            <strong>{{ alert.med_name }}</strong> at {{ alert.pharmacy_name }}
+            <span class="stock-badge">{{ alert.stock_quantity }} left</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Charts Row 1: Revenue & Sales -->
+<div class="charts-row">
+    <div class="chart-container">
+        <h3>Revenue by Pharmacy</h3>
+        <canvas id="revenueChart"></canvas>
+        <table class="chart-table">
+            <thead><tr><th>Pharmacy</th><th>Revenue</th><th>Share</th><th>Purchases</th></tr></thead>
+            <tbody>
+            {% for r in revenue_by_pharmacy %}
+            <tr><td>{{ r.pharmacy_name }}</td><td>${{ "%.2f"|format(r.revenue) }}</td><td>{{ r.pct }}%</td><td>{{ r.purchase_count }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="chart-container">
+        <h3>Medicine Sales Volume</h3>
+        <canvas id="medicineSalesChart"></canvas>
+        <table class="chart-table">
+            <thead><tr><th>Medicine</th><th>Unit Price</th><th>Units Sold</th><th>Revenue</th></tr></thead>
+            <tbody>
+            {% for m in medicine_sales %}
+            <tr><td>{{ m.med_name }}</td><td>${{ "%.2f"|format(m.cost) }}</td><td>{{ m.units_sold }}</td><td>${{ "%.2f"|format(m.total_revenue) }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Charts Row 2: Trends & Scatter -->
+<div class="charts-row">
+    <div class="chart-container">
+        <h3>Monthly Revenue Trend</h3>
+        <canvas id="trendChart"></canvas>
+        <table class="chart-table">
+            <thead><tr><th>Month</th><th>Transactions</th><th>Units</th><th>Revenue</th><th>Growth</th></tr></thead>
+            <tbody>
+            {% for t in monthly_trends %}
+            <tr>
+                <td>{{ t.month }}</td><td>{{ t.num_purchases }}</td><td>{{ t.units_sold }}</td>
+                <td>${{ "%.2f"|format(t.monthly_revenue) }}</td>
+                <td style="color: {{ 'green' if t.growth_pct >= 0 else 'red' }}">{{ "%+.1f"|format(t.growth_pct) }}%</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="chart-container">
+        <h3>Price vs. Demand Analysis</h3>
+        <canvas id="scatterChart"></canvas>
+        <p class="chart-note">Bubble size represents total units sold. This analysis helps identify price sensitivity patterns across the medicine catalog.</p>
+    </div>
+</div>
+
+<!-- Charts Row 3: Customer Segmentation & Inventory -->
+<div class="charts-row">
+    <div class="chart-container">
+        <h3>Customer Segmentation</h3>
+        <canvas id="customerChart"></canvas>
+        <table class="chart-table">
+            <thead><tr><th>Customer</th><th>Tier</th><th>Purchases</th><th>Total Spent</th><th>Avg Order</th></tr></thead>
+            <tbody>
+            {% for c in customer_data %}
+            <tr>
+                <td>{{ c.name }}</td>
+                <td><span class="tier-badge tier-{{ c.tier|lower|replace(' ', '-') }}">{{ c.tier }}</span></td>
+                <td>{{ c.purchase_count }}</td>
+                <td>${{ "%.2f"|format(c.total_spent) }}</td>
+                <td>${{ "%.2f"|format(c.avg_order_value) }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="chart-container">
+        <h3>Pharmacy Inventory Coverage</h3>
+        <canvas id="inventoryChart"></canvas>
+        <table class="chart-table">
+            <thead><tr><th>Pharmacy</th><th>Medicines</th><th>Coverage</th><th>Stock Units</th></tr></thead>
+            <tbody>
+            {% for inv in inventory_coverage %}
+            <tr>
+                <td>{{ inv.pharmacy_name }}</td>
+                <td>{{ inv.medicines_stocked }} / {{ summary.total_medicines }}</td>
+                <td>
+                    <div class="progress-bar"><div class="progress-fill" style="width: {{ inv.coverage_pct }}%">{{ inv.coverage_pct }}%</div></div>
+                </td>
+                <td>{{ inv.total_stock }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+// 1. Revenue by Pharmacy — Bar Chart
+new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ revenue_by_pharmacy|map(attribute='pharmacy_name')|list|tojson }},
+        datasets: [{
+            label: 'Revenue ($)',
+            data: {{ revenue_by_pharmacy|map(attribute='revenue')|list|tojson }},
+            backgroundColor: COLORS.slice(0, {{ revenue_by_pharmacy|length }}),
+            borderRadius: 6
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } } } }
+});
+
+// 2. Medicine Sales — Horizontal Bar
+new Chart(document.getElementById('medicineSalesChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ medicine_sales|map(attribute='med_name')|list|tojson }},
+        datasets: [{
+            label: 'Units Sold',
+            data: {{ medicine_sales|map(attribute='units_sold')|list|tojson }},
+            backgroundColor: COLORS.slice(0, {{ medicine_sales|length }}),
+            borderRadius: 6
+        }]
+    },
+    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+});
+
+// 3. Monthly Trend — Line Chart
+new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+        labels: {{ monthly_trends|map(attribute='month')|list|tojson }},
+        datasets: [{
+            label: 'Revenue ($)',
+            data: {{ monthly_trends|map(attribute='monthly_revenue')|list|tojson }},
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37,99,235,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: '#2563eb'
+        }, {
+            label: 'Units Sold',
+            data: {{ monthly_trends|map(attribute='units_sold')|list|tojson }},
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16,185,129,0.1)',
+            fill: false,
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: '#10b981',
+            yAxisID: 'y1'
+        }]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } }, y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } } } }
+});
+
+// 4. Scatter — Price vs Demand
+new Chart(document.getElementById('scatterChart'), {
+    type: 'bubble',
+    data: {
+        datasets: [
+            {% for item in price_vs_demand %}
+            {
+                label: '{{ item.med_name }}',
+                data: [{ x: {{ item.cost }}, y: {{ item.times_purchased }}, r: {{ (item.total_units or 1) * 3 }} }],
+                backgroundColor: COLORS[{{ loop.index0 % 6 }}] + '99'
+            },
+            {% endfor %}
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            x: { title: { display: true, text: 'Unit Price ($)' }, beginAtZero: true },
+            y: { title: { display: true, text: 'Times Purchased' }, beginAtZero: true }
+        },
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+
+// 5. Customer Spending — Doughnut
+new Chart(document.getElementById('customerChart'), {
+    type: 'doughnut',
+    data: {
+        labels: {{ customer_data|map(attribute='name')|list|tojson }},
+        datasets: [{
+            data: {{ customer_data|map(attribute='total_spent')|list|tojson }},
+            backgroundColor: COLORS.slice(0, {{ customer_data|length }}),
+            borderWidth: 2
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+
+// 6. Inventory Coverage — Stacked Bar
+new Chart(document.getElementById('inventoryChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ inventory_coverage|map(attribute='pharmacy_name')|list|tojson }},
+        datasets: [{
+            label: 'Stocked',
+            data: {{ inventory_coverage|map(attribute='medicines_stocked')|list|tojson }},
+            backgroundColor: '#10b981',
+            borderRadius: 4
+        }, {
+            label: 'Not Stocked',
+            data: {{ inventory_coverage|map(attribute='not_stocked')|list|tojson }},
+            backgroundColor: '#e5e7eb',
+            borderRadius: 4
+        }]
+    },
+    options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Number of Medicines' } } } }
+});
+</script>
+
+<style>
+    .insights-section { margin-bottom: 32px; }
+    .alerts-section { margin-bottom: 32px; background: #fff1f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; }
+    .alert-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin-top: 12px; }
+    .alert-card { background: white; padding: 12px; border-radius: 6px; border-left: 4px solid #dc2626; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+    .stock-badge { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 0.8rem; }
+    .insights-grid { display: grid; gap: 12px; }
+    .insight-card {
+        background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+        border-left: 4px solid #2563eb;
+        padding: 14px 18px;
+        border-radius: 0 6px 6px 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .insight-icon { color: #2563eb; font-size: 1rem; margin-top: 2px; }
+    .insight-card p { margin: 0; font-size: 0.92rem; color: #333; line-height: 1.5; }
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+    .chart-container {
+        background: #fff;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 20px;
+    }
+    .chart-container h3 { font-size: 1rem; margin-bottom: 12px; color: #333; }
+    .chart-container canvas { max-height: 280px; margin-bottom: 16px; }
+    .chart-table { font-size: 0.82rem; margin-top: 8px; }
+    .chart-table th { font-size: 0.78rem; padding: 6px 10px; }
+    .chart-table td { padding: 5px 10px; font-size: 0.82rem; }
+    .chart-note { font-size: 0.82rem; color: #666; margin-top: 8px; font-style: italic; }
+    .tier-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+    .tier-high-value { background: #dcfce7; color: #166534; }
+    .tier-medium-value { background: #fef3c7; color: #92400e; }
+    .tier-low-value { background: #fee2e2; color: #991b1b; }
+    .progress-bar {
+        background: #e5e7eb;
+        border-radius: 10px;
+        height: 20px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        background: #2563eb;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.72rem;
+        font-weight: 600;
+        min-width: 35px;
+    }
+    @media (max-width: 768px) {
+        .charts-row { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}

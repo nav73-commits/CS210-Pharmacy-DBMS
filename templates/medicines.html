@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Medicines - Pharmacy Database{% endblock %}
+
+{% block content %}
+<h2>Medicines</h2>
+
+<div class="form-section">
+    <h3>Add New Medicine</h3>
+    <form method="POST" action="{{ url_for('add_medicine') }}">
+        <div class="form-group">
+            <label>Medicine ID</label>
+            <input type="text" name="med_id" required placeholder="e.g., MED001">
+        </div>
+        <div class="form-group">
+            <label>Medicine Name</label>
+            <input type="text" name="med_name" required placeholder="e.g., Paracetamol">
+        </div>
+        <div class="form-group">
+            <label>Cost ($)</label>
+            <input type="number" step="0.01" name="cost" required placeholder="e.g., 5.99">
+        </div>
+        <div class="form-group">
+            <label>Dosage (mg)</label>
+            <input type="number" name="dosage_mg" required placeholder="e.g., 500">
+        </div>
+        <button type="submit">Add Medicine</button>
+    </form>
+</div>
+
+<h3>All Medicines</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Medicine ID</th>
+            <th>Medicine Name</th>
+            <th>Cost</th>
+            <th>Dosage (mg)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for medicine in medicines %}
+        <tr>
+            <td>{{ medicine.med_id }}</td>
+            <td>{{ medicine.med_name }}</td>
+            <td>${{ "%.2f"|format(medicine.cost) }}</td>
+            <td>{{ medicine.dosage_mg }}</td>
+            <td>
+                <div class="actions">
+                    <button type="button" class="btn btn-sm" onclick="toggleEdit('{{ medicine.med_id }}')">Edit</button>
+                    <a href="{{ url_for('delete_medicine', med_id=medicine.med_id) }}" 
+                       class="btn btn-danger btn-sm" 
+                       onclick="return confirm('Are you sure?')">Delete</a>
+                </div>
+            </td>
+        </tr>
+        <tr id="edit-{{ medicine.med_id }}" class="edit-row">
+            <td colspan="5">
+                <form method="POST" action="{{ url_for('update_medicine', med_id=medicine.med_id) }}" class="edit-form">
+                    <div class="form-group">
+                        <label>Medicine Name</label>
+                        <input type="text" name="med_name" value="{{ medicine.med_name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cost ($)</label>
+                        <input type="number" step="0.01" name="cost" value="{{ medicine.cost }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Dosage (mg)</label>
+                        <input type="number" name="dosage_mg" value="{{ medicine.dosage_mg }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-sm">Save</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit('{{ medicine.med_id }}')">Cancel</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

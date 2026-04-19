@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Pharmacy Database{% endblock %}
+
+{% block content %}
+<h2>Reports & Analytics</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>{{ sales.total_purchases if sales.total_purchases else 0 }}</h3>
+        <p>Total Purchases</p>
+    </div>
+    <div class="stat-card">
+        <h3>${{ "%.2f"|format(sales.total_revenue) if sales.total_revenue else "0.00" }}</h3>
+        <p>Total Revenue</p>
+    </div>
+</div>
+
+<h3>Most Popular Medicines</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Medicine ID</th>
+            <th>Medicine Name</th>
+            <th>Purchase Count</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for med in popular %}
+        <tr>
+            <td>{{ med.med_id }}</td>
+            <td>{{ med.med_name }}</td>
+            <td>{{ med.purchase_count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Customer Spending</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Customer ID</th>
+            <th>Customer Name</th>
+            <th>Purchases</th>
+            <th>Total Spent</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cust in customer_spending %}
+        <tr>
+            <td>{{ cust.cust_id }}</td>
+            <td>{{ cust.name }}</td>
+            <td>{{ cust.purchase_count }}</td>
+            <td>${{ "%.2f"|format(cust.total_spent) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Pharmacy Database{% endblock %}
+
+{% block content %}
+<h2>Dashboard</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>{{ stats.locations }}</h3>
+        <p>Locations</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.pharmacies }}</h3>
+        <p>Pharmacies</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.medicines }}</h3>
+        <p>Medicines</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.customers }}</h3>
+        <p>Customers</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.purchases }}</h3>
+        <p>Purchases</p>
+    </div>
+    <div class="stat-card">
+        <h3>${{ "%.2f"|format(stats.revenue) }}</h3>
+        <p>Total Revenue</p>
+    </div>
+</div>
+
+<h3>Quick Navigation</h3>
+<div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <a href="{{ url_for('locations') }}" class="btn">Manage Locations</a>
+    <a href="{{ url_for('pharmacies') }}" class="btn">Manage Pharmacies</a>
+    <a href="{{ url_for('medicines') }}" class="btn">Manage Medicines</a>
+    <a href="{{ url_for('customers') }}" class="btn">Manage Customers</a>
+    <a href="{{ url_for('available') }}" class="btn">Manage Availability</a>
+    <a href="{{ url_for('purchases') }}" class="btn">Record Purchase</a>
+    <a href="{{ url_for('reports') }}" class="btn btn-success">View Reports</a>
+</div>
+{% endblock %}
